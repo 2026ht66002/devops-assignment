@@ -39,4 +39,4 @@ jobs:
       - name: Test the build
         run: |
           sleep 5
-          curl http://localhost:5000/plans
+          curl http://localhost:5001/plans
