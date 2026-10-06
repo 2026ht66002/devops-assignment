@@ -35,3 +35,8 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t aceest-fitness-gym .
+
+      - name: Test the build
+        run: |
+          sleep 5
+          curl http://localhost:5000/plans
