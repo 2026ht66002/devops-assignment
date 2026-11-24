@@ -80,5 +80,22 @@ pipeline {
             }
         }
 
+        stage('Deploy to Minikube') {
+            steps {
+                sh '''
+                    set -eu
+
+                    minikube status
+                    kubectl config use-context minikube
+
+                    kubectl apply -f k8s/minikube.yaml
+
+                    kubectl rollout restart deployment/aceest-fitness-gym
+                    kubectl rollout status deployment/aceest-fitness-gym --timeout=180s
+                    kubectl get deployment,service aceest-fitness-gym
+                '''
+            }
+        }
+
     }
 }
