@@ -94,13 +94,21 @@ The workflow at `.github/workflows/main.yml` runs on pushes and pull requests. I
 
 ### Jenkins
 
-The `Jenkinsfile` defines stages to install dependencies, run Pytest, and build the Docker image. Create a Jenkins Pipeline job that loads this `Jenkinsfile` from the repository, using `https://github.com/2026ht66002/devops-assignment.git` and the `main` branch. For a private repository, configure access through Jenkins Credentials; do not store passwords in the repository.
+The `Jenkinsfile` installs dependencies, runs Pytest, analyzes the project with SonarQube, builds and pushes the Docker image, then deploys it to Minikube. The current pipeline runs SonarQube analysis but does not wait for a Quality Gate result or generate a coverage report. Create a Jenkins Pipeline job that loads this `Jenkinsfile` from the repository, using `https://github.com/2026ht66002/devops-assignment.git` and the `main` branch. For a private repository, configure access through Jenkins Credentials; do not store passwords in the repository.
 
-The Jenkins agent needs Python 3, the Docker CLI, and access to a Docker daemon. If Jenkins runs in a container, configure Docker access on the Jenkins host or agent.
+Configure a Jenkins SonarQube server named `SonarQube`, a SonarScanner tool named `SonarScanner`, and a secret-text credential with ID `sonar-qube-token`. Add a username/password credential with ID `dockerhub-credentials` for Docker Hub; keep all tokens and passwords in Jenkins Credentials rather than in source control.
+
+The Jenkins agent needs Python 3, the Docker CLI, access to a Docker daemon, and `kubectl` configured with a `minikube` context that the agent can reach. The Minikube CLI itself is not required in Jenkins. The pipeline pushes both `latest` and the Jenkins build-number tags to the public Docker Hub repository `2026ht66002/devops-assignment-2`, then applies [k8s/minikube.yaml](./k8s/minikube.yaml) to create or update the `aceest-fitness-gym` Deployment and NodePort Service. The deployment uses `imagePullPolicy: Always`. If Jenkins runs in a container, persist `/var/jenkins_home`, install `kubectl` under `/var/jenkins_home/bin`, and provide `/var/jenkins_home/.kube/config` with a Minikube API endpoint reachable from that container.
+
+After a successful deployment, get the application URL with:
+
+```bash
+minikube service aceest-fitness-gym --url
+```
 
 ## Screenshot Walkthrough
 
-These screenshots are in chronological order. Each numbered step describes the action shown immediately below it.
+These screenshots are grouped by workflow and are chronological where timestamps are available. Each numbered step describes the action shown immediately below it.
 
 ### Repository and Tests
 
@@ -178,14 +186,69 @@ These screenshots are in chronological order. Each numbered step describes the a
 
 ![GitHub Actions running the image and checking the plans endpoint](ScreenShots/Screenshot_2026-10-07_02-56-39.png)
 
+### SonarQube, Docker Hub, and Minikube
+
+**Step 18: Generate a SonarQube token for Jenkins authentication.** Save it as the Jenkins secret-text credential `sonar-qube-token`; never commit the token to the repository.
+
+![SonarQube token generation screen](ScreenShotsAssignment2/Screenshot_2026-11-24_18-17-50.png)
+
+**Step 19: Install the SonarQube Scanner integration in Jenkins.** The screenshot shows the Scanner and Quality Gates plugins being installed.
+
+![Installing SonarQube-related Jenkins plugins](ScreenShotsAssignment2/Screenshot_2026-11-24_18-19-26.png)
+
+**Step 20: Configure the Jenkins SonarScanner tool.** Use the name `SonarScanner` to match the `tool` reference in the Jenkinsfile.
+
+![Configuring the SonarScanner tool in Jenkins](ScreenShotsAssignment2/Screenshot_2026-11-24_18-24-55.png)
+
+**Step 21: Add the SonarQube server in Jenkins.** Name the server `SonarQube` and select the `sonar-qube-token` credential.
+
+![Configuring the SonarQube server in Jenkins](ScreenShotsAssignment2/Screenshot_2026-11-24_18-30-56.png)
+
+**Step 22: Run the initial Jenkins analysis and Docker build.** This recorded build completes checkout, dependency installation, tests, SonarQube analysis, and Docker image build.
+
+![Initial Jenkins pipeline run through the Docker build](ScreenShotsAssignment2/Screenshot_2026-11-24_19-27-41.png)
+
+**Step 23: Review the SonarQube project report.** This snapshot shows security findings to review; successful analysis does not mean there are no issues.
+
+![SonarQube project security overview](ScreenShotsAssignment2/sonar1.png)
+
+**Step 24: Add Docker Hub credentials in Jenkins.** Use a username/password credential with ID `dockerhub-credentials`; do not expose the password in screenshots or source control.
+
+![Adding Docker Hub credentials in Jenkins](ScreenShotsAssignment2/Screenshot_2026-11-24_19-42-24.png)
+
+**Step 25: Confirm the Jenkins pipeline pushes the Docker image to the registry.**
+
+![Successful Jenkins run that pushes the Docker image](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 8.55.42 PM.png>)
+
+**Step 26: Verify that Docker Hub contains the `latest` and build-number tags.**
+
+![Docker Hub repository tags](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 8.58.33 PM.png>)
+
+**Step 27: Review a successful Jenkins run that includes a Quality Gate stage.** This is a captured earlier pipeline run; the current Jenkinsfile performs SonarQube analysis but does not include `waitForQualityGate`.
+
+![Earlier Jenkins pipeline run with a Quality Gate stage](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 9.05.23 PM.png>)
+
+**Step 28: Start Minikube and confirm the cluster is ready.** The Minikube CLI runs on the host; Jenkins uses `kubectl` to deploy to the cluster.
+
+![Starting the Minikube cluster](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 10.12.37 PM.png>)
+
+**Step 29: Confirm Jenkins applies the Kubernetes manifest and waits for the deployment rollout.**
+
+![Successful Jenkins deployment to Minikube](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 10.49.52 PM.png>)
+
+**Step 30: Review the SonarQube project overview after the deployment run.**
+
+![SonarQube overview after the final pipeline run](<ScreenShotsAssignment2/Screenshot 2026-11-24 at 10.51.25 PM.png>)
+
 ## Project Files
 
 - `app.py` contains the Flask routes and sample data.
 - `tests/test_app.py` contains the automated endpoint tests.
 - `Dockerfile` defines the container image.
+- `k8s/minikube.yaml` defines the Minikube Deployment and NodePort Service.
 - `.github/workflows/main.yml` defines GitHub Actions validation.
 - `Jenkinsfile` defines the Jenkins build pipeline.
-- `ScreenShots/` contains the project walkthrough images.
+- `ScreenShots/` and `ScreenShotsAssignment2/` contain the project walkthrough images.
 
 ## License
 
