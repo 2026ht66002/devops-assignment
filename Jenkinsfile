@@ -50,5 +50,29 @@ pipeline {
                 '''
             }
         }
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                )]) {
+                    sh '''
+                        set -eu
+                        export DOCKER_CONFIG="$(mktemp -d)"
+                        trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+
+                        IMAGE_REPOSITORY='docker.io/2026ht66002/devops-assignment-2'
+                        printf '%s' "$DOCKERHUB_PASSWORD" | docker login docker.io \
+                            --username "$DOCKERHUB_USERNAME" --password-stdin
+                        docker tag aceest-fitness-gym "$IMAGE_REPOSITORY:latest"
+                        docker tag aceest-fitness-gym "$IMAGE_REPOSITORY:$BUILD_NUMBER"
+                        docker push "$IMAGE_REPOSITORY:latest"
+                        docker push "$IMAGE_REPOSITORY:$BUILD_NUMBER"
+                    '''
+                }
+            }
+        }
+
     }
 }
