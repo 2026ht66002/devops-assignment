@@ -4,7 +4,6 @@ pipeline {
     environment {
         PYTHONPATH = "${WORKSPACE}"
         KUBECONFIG = '/var/jenkins_home/.kube/config'
-        PATH+KUBECTL = '/var/jenkins_home/bin'
     }
 
     stages {
@@ -79,6 +78,7 @@ pipeline {
             steps {
                 sh '''
                     set -eu
+                    export PATH="/var/jenkins_home/bin:$PATH"
 
                     command -v kubectl >/dev/null 2>&1 || {
                         echo "kubectl must be installed on the Jenkins agent" >&2
