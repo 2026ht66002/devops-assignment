@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         PYTHONPATH = "${WORKSPACE}"
+        KUBECONFIG = '/var/jenkins_home/.kube/config'
+        PATH+KUBECTL = '/var/jenkins_home/bin'
     }
 
     stages {
@@ -78,8 +80,12 @@ pipeline {
                 sh '''
                     set -eu
 
-                    minikube status
+                    command -v kubectl >/dev/null 2>&1 || {
+                        echo "kubectl must be installed on the Jenkins agent" >&2
+                        exit 1
+                    }
                     kubectl config use-context minikube
+                    kubectl get --raw=/version >/dev/null
 
                     kubectl apply -f k8s/minikube.yaml
 
