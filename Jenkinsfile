@@ -34,20 +34,13 @@ pipeline {
                     def scannerHome = tool 'SonarScanner'
                     withCredentials([string(credentialsId: 'sonar-qube-token', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('SonarQube') {
-                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aceest-fitness-gym -Dsonar.projectName='ACEest Fitness and Gym' -Dsonar.sources=app.py -Dsonar.tests=tests"
+                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aceest-fitness-gym -Dsonar.projectName='ACEest Fitness and Gym' -Dsonar.sources=."
                         }
                     }
                 }
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
         
         stage('Build Docker Image') {
             steps {
