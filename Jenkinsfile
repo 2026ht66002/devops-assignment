@@ -27,12 +27,12 @@ pipeline {
                 '''
             }
         }
-
+        
         stage('Build Docker Image') {
             steps {
                 sh '''
                     docker --version
-                    docker build -t aceest-fitness-gym .
+                    sudo docker build -t aceest-fitness-gym .
                 '''
             }
         }
