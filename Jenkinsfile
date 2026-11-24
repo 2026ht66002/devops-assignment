@@ -32,7 +32,7 @@ pipeline {
             steps {
                 sh '''
                     docker --version
-                    sudo docker build -t aceest-fitness-gym .
+                    docker build -t aceest-fitness-gym .
                 '''
             }
         }
