@@ -34,7 +34,7 @@ pipeline {
                     def scannerHome = tool 'SonarScanner'
                     withCredentials([string(credentialsId: 'sonar-qube-token', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('SonarQube') {
-                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.token=${SONAR_TOKEN}"
+                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aceest-fitness-gym -Dsonar.projectName='ACEest Fitness and Gym' -Dsonar.sources=."
                         }
                     }
                 }
