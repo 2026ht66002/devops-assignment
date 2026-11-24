@@ -23,7 +23,7 @@ pipeline {
                     pwd
                     ls -la
                     . .venv/bin/activate
-                    python -m pytest -q --cov=app --cov-report=xml:coverage.xml
+                    python -m pytest -q
                 '''
             }
         }
@@ -34,7 +34,7 @@ pipeline {
                     def scannerHome = tool 'SonarScanner'
                     withCredentials([string(credentialsId: 'sonar-qube-token', variable: 'SONAR_TOKEN')]) {
                         withSonarQubeEnv('SonarQube') {
-                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aceest-fitness-gym -Dsonar.projectName='ACEest Fitness and Gym' -Dsonar.sources=app.py -Dsonar.tests=tests -Dsonar.python.coverage.reportPaths=coverage.xml"
+                            sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=aceest-fitness-gym -Dsonar.projectName='ACEest Fitness and Gym' -Dsonar.sources=."
                         }
                     }
                 }
